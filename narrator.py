@@ -25,7 +25,8 @@ def encode_image(image_path):
 
 
 def play_audio(text):
-    audio = generate(text, voice=os.environ.get("ELEVENLABS_VOICE_ID"))
+    davidAttenborough = "C79t4TjqhEH80tvSTB9z"
+    audio = generate(text, voice=davidAttenborough)
 
     unique_id = base64.urlsafe_b64encode(os.urandom(30)).decode("utf-8").rstrip("=")
     dir_path = os.path.join("narration", unique_id)
@@ -43,7 +44,7 @@ def generate_new_line(base64_image):
         {
             "role": "user",
             "content": [
-                {"type": "text", "text": "Describe this image"},
+                {"type": "text", "text": "Describe this image as if you are David Attenborough"},
                 {
                     "type": "image_url",
                     "image_url": f"data:image/jpeg;base64,{base64_image}",
@@ -54,22 +55,27 @@ def generate_new_line(base64_image):
 
 
 def analyze_image(base64_image, script):
-    response = client.chat.completions.create(
-        model="gpt-4-vision-preview",
-        messages=[
-            {
-                "role": "system",
-                "content": """
-                You are Sir David Attenborough. Narrate the picture of the human as if it is a nature documentary.
-                Make it snarky and funny. Don't repeat yourself. Make it short. If I do anything remotely interesting, make a big deal about it!
-                """,
-            },
-        ]
-        + script
-        + generate_new_line(base64_image),
-        max_tokens=500,
-    )
-    response_text = response.choices[0].message.content
+    while True:
+        response = client.chat.completions.create(
+            model="gpt-4-vision-preview",
+            messages=[
+                {
+                    "role": "system",
+                    "content": """
+                    You are Sir David Attenborough. Narrate the picture of the human as if it is a nature documentary.
+                    Make it snarky, and funny. Don't repeat yourself. Make it short. If the human does anything remotely interesting, make a big deal about it!
+                    Include a creative backstory about the human subject.
+                    Evaluate each picture as if you're really there, do not mention it being a photograph, image or picture.
+                    """,
+                },
+            ]
+            + script
+            + generate_new_line(base64_image),
+            max_tokens=500,
+        )
+        response_text = response.choices[0].message.content
+        if not response_text.startswith("I'm sorry"):
+            break
     return response_text
 
 
